@@ -43,10 +43,10 @@
 //! println!("Portfolio: ${:.2}", wallet.portfolio_value(&prices));
 //! ```
 
-pub mod wallet;
 pub mod engine;
 pub mod log;
+pub mod wallet;
 
-pub use wallet::{GhostWallet, MarketPrices};
 pub use engine::{execute_buy, execute_sell, CELLULAR_ATP, ENERGY_COMMITMENT, METABOLIC_COST};
 pub use log::GhostTradeLog;
+pub use wallet::{GhostWallet, MarketPrices};

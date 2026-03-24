@@ -1,7 +1,7 @@
 //! Ghost trade execution engine.
 
-use crate::wallet::{GhostWallet, MarketPrices};
-use crate::log::{GhostTradeLog, append_ghost_log};
+use crate::log::{append_ghost_log, GhostTradeLog};
+use crate::wallet::GhostWallet;
 
 /// Initial biological energy currency (USDT).
 pub const CELLULAR_ATP: f32 = 500.0;
@@ -25,7 +25,9 @@ pub fn execute_buy(
     log_path: Option<&str>,
 ) {
     let spend_usdt = wallet.balance_usdt * wallet.trade_fraction;
-    if spend_usdt < 0.01 { return; }
+    if spend_usdt < 0.01 {
+        return;
+    }
 
     let fee = spend_usdt * METABOLIC_COST;
     let net_spend = spend_usdt - fee;
@@ -71,7 +73,9 @@ pub fn execute_sell(
     log_path: Option<&str>,
 ) {
     let qty = wallet.balance(asset) * wallet.trade_fraction;
-    if qty < 1e-9 { return; }
+    if qty < 1e-9 {
+        return;
+    }
 
     let entry_price = wallet.entry_price(asset);
     let proceeds = qty * price;
@@ -112,6 +116,7 @@ pub fn execute_sell(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::wallet::MarketPrices;
 
     #[test]
     fn test_buy_reduces_usdt() {
@@ -126,7 +131,10 @@ mod tests {
         let mut wallet = GhostWallet::new();
         let before = wallet.balance_usdt;
         execute_sell(&mut wallet, "DNX", 0.05, 1, "test", None);
-        assert!(wallet.balance_usdt > before, "sell at profit should increase USDT");
+        assert!(
+            wallet.balance_usdt > before,
+            "sell at profit should increase USDT"
+        );
     }
 
     #[test]
@@ -141,10 +149,18 @@ mod tests {
     fn test_portfolio_value() {
         let wallet = GhostWallet::new();
         let prices = MarketPrices {
-            dnx: 0.0266, sol: 86.0, render: 1.52,
-            asi: 0.0616, near: 1.31, btc: 70_000.0, pepe: 0.000_003_35,
+            dnx: 0.0266,
+            sol: 86.0,
+            render: 1.52,
+            asi: 0.0616,
+            near: 1.31,
+            btc: 70_000.0,
+            pepe: 0.000_003_35,
         };
         let value = wallet.portfolio_value(&prices);
-        assert!(value > CELLULAR_ATP, "initial portfolio should exceed USDT balance");
+        assert!(
+            value > CELLULAR_ATP,
+            "initial portfolio should exceed USDT balance"
+        );
     }
 }
