@@ -13,7 +13,7 @@
 //!
 //! ## Provenance
 //!
-//! Extracted from Eagle-Lander, a private neuromorphic GPU supervisor (closed-source).
+//! Extracted from Eagle-Lander, the author's own private neuromorphic GPU supervisor repository (closed-source).
 //! The ghost trading engine ran in
 //! production for Dynex/Quai/Qubic portfolio optimization before being open-sourced
 //! as a standalone library.
