@@ -1,7 +1,7 @@
 [package]
 name = "spikenaut-ghost"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "GPL-3.0-or-later"
 description = "Bio-inspired ghost trading engine: ATP cellular energy metaphors, 8% energy commitment per signal, 0.1% metabolic cost, multi-asset portfolio (7 assets), JSONL audit log"
 repository = "https://github.com/Limen-Neural/metabolic-ledger"
