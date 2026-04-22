@@ -84,14 +84,6 @@ wallet.balance_atp     -= committed + cost
 Inspired by ATP as cellular energy currency (Alberts et al. 2002) and half-Kelly
 position sizing (Kelly 1956; Thorp 1969).
 
-## Related Projects
-
-| Library | Purpose |
-|---------|---------|
-| [Kelly.jl](https://github.com/rmems/SpikenautKelly.jl) | Kelly position sizing in Julia |
-| [Execution.jl](https://github.com/rmems/SpikenautExecution.jl) | Live dYdX v4 execution pipeline |
-| [neuromod](https://github.com/rmems/neuromod) | LIF/Izhikevich SNN generating trade signals |
-
 ## Provenance
 
 Extracted from Eagle-Lander, the author's own private neuromorphic GPU supervisor
