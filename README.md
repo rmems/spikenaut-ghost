@@ -1,13 +1,11 @@
 <p align="center">
-  <img src="docs/logo.png" width="220" alt="Spikenaut">
+  <img src="docs/logo.png" width="220" alt="Metabolic Ledger">
 </p>
 
-<h1 align="center">spikenaut-ghost</h1>
+<h1 align="center">metabolic-ledger</h1>
 <p align="center">Bio-inspired ghost trading engine with ATP cellular energy metaphors</p>
 
 <p align="center">
-  <a href="https://crates.io/crates/spikenaut-ghost"><img src="https://img.shields.io/crates/v/spikenaut-ghost" alt="crates.io"></a>
-  <a href="https://docs.rs/spikenaut-ghost"><img src="https://docs.rs/spikenaut-ghost/badge.svg" alt="docs.rs"></a>
   <img src="https://img.shields.io/badge/license-GPL--3.0-orange" alt="GPL-3.0">
 </p>
 
@@ -22,7 +20,7 @@ logged to JSONL for SNN training data and post-hoc analysis.
 
 - `GhostWallet` — dynamic multi-asset portfolio with weighted-average cost basis per asset
 - `execute_buy` / `execute_sell` — ATP-gated order execution with metabolic cost
-- `CELLULAR_ATP = 500.0` — initial energy budget (USDT equivalent)
+- `CELLULAR_ATP = 500.0` — initial energy budget (quote-unit equivalent)
 - `ENERGY_COMMITMENT = 0.08` — 8% of available energy per signal
 - `METABOLIC_COST = 0.001` — 0.1% friction per action
 - `GhostTradeLog` — JSONL audit trail with timestamp, asset, side, price, units, reason
@@ -31,36 +29,36 @@ logged to JSONL for SNN training data and post-hoc analysis.
 ## Review note
 This branch contains the Wallet/MarketPrices refactor to dynamic asset maps.
 
-## Installation
+## Usage (Git Dependency)
 
 ```toml
-spikenaut-ghost = "0.1"
+metabolic-ledger = { git = "https://github.com/Limen-Neural/metabolic-ledger" }
 ```
 
 ## Quick Start
 
 ```rust
-use spikenaut_ghost::{GhostWallet, execute_buy, execute_sell};
+use metabolic_ledger::{GhostWallet, execute_buy, execute_sell};
 use std::collections::HashMap;
 
 let mut wallet = GhostWallet::new();
 let prices: HashMap<String, f32> = HashMap::from([
-    ("DNX".to_string(), 0.027),
-    ("SOL".to_string(), 90.0),
+    ("ASSET_A".to_string(), 12.5),
+    ("ASSET_B".to_string(), 86.0),
 ]);
 
-// SNN fires a BUY signal for DNX
-execute_buy(&mut wallet, "DNX", prices["DNX"], 1, "bull signal: confidence=0.92", None);
+// SNN fires a BUY signal for ASSET_A
+execute_buy(&mut wallet, "ASSET_A", prices["ASSET_A"], 1, "bull signal: confidence=0.92", None);
 
-println!("Portfolio: ${:.2}", wallet.portfolio_value(&prices));
-println!("DNX units: {:.2}", wallet.balance("DNX"));
+println!("Portfolio: {:.2}", wallet.portfolio_value(&prices));
+println!("ASSET_A units: {:.2}", wallet.balance("ASSET_A"));
 ```
 
 ## With JSONL Audit Log
 
 ```rust
-execute_buy(&mut wallet, "BTC", 65_000.0, 1, "snn_fire", Some("trades.jsonl"));
-// Appends: {"ts":"2024-...","asset":"BTC","side":"BUY","price":65000.0,...}
+execute_buy(&mut wallet, "ASSET_A", 65.0, 1, "snn_fire", Some("trades.jsonl"));
+// Appends: {"ts":"2024-...","asset":"ASSET_A","side":"BUY","price":65.0,...}
 ```
 
 ## Energy Model
@@ -76,18 +74,18 @@ wallet.balance_atp     -= committed + cost
 Inspired by ATP as cellular energy currency (Alberts et al. 2002) and half-Kelly
 position sizing (Kelly 1956; Thorp 1969).
 
-## Part of the Spikenaut Ecosystem
+## Related Projects
 
 | Library | Purpose |
 |---------|---------|
-| [SpikenautKelly.jl](https://github.com/rmems/SpikenautKelly.jl) | Kelly position sizing in Julia |
-| [SpikenautExecution.jl](https://github.com/rmems/SpikenautExecution.jl) | Live dYdX v4 execution pipeline |
+| [Kelly.jl](https://github.com/rmems/SpikenautKelly.jl) | Kelly position sizing in Julia |
+| [Execution.jl](https://github.com/rmems/SpikenautExecution.jl) | Live dYdX v4 execution pipeline |
 | [neuromod](https://github.com/rmems/neuromod) | LIF/Izhikevich SNN generating trade signals |
 
 ## Provenance
 
 Extracted from Eagle-Lander, the author's own private neuromorphic GPU supervisor
-repository (closed-source). Ghost-traded Dynex/Quai/Qubic/BTC portfolios in
+repository (closed-source). Ghost-traded generalized multi-asset portfolios in
 production alongside the live SNN supervisor.
 
 ## License

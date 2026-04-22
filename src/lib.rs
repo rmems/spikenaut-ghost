@@ -1,11 +1,10 @@
-//! # spikenaut-ghost
 //!
 //! Bio-inspired ghost trading engine with cellular ATP energy metaphors.
 //!
 //! Ghost trading simulates a multi-asset portfolio without real funds,
 //! using biological energy concepts to constrain position sizing:
 //!
-//! - **ATP** (`CELLULAR_ATP = 500 USDT`) — total available energy
+//! - **ATP** (`CELLULAR_ATP = 500 quote units`) — total available energy
 //! - **Energy commitment** (8% per signal) — fraction risked per trade
 //! - **Metabolic cost** (0.1% per action) — friction / spread simulation
 //!
@@ -14,8 +13,7 @@
 //! ## Provenance
 //!
 //! Extracted from Eagle-Lander, the author's own private neuromorphic GPU supervisor repository (closed-source).
-//! The ghost trading engine ran in
-//! production for Dynex/Quai/Qubic portfolio optimization before being open-sourced
+//! The ghost trading engine ran in production for multi-asset portfolio optimization before being open-sourced
 //! as a standalone library.
 //!
 //! ## References
@@ -30,21 +28,6 @@
 //!
 //! - Alberts, B. et al. (2002). *Molecular Biology of the Cell* (4th ed.).
 //!   ATP as cellular energy currency — conceptual basis for CELLULAR_ATP metaphor.
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use spikenaut_ghost::{GhostWallet, execute_buy};
-//!
-//! let mut wallet = GhostWallet::new();
-//! let prices = std::collections::HashMap::from([
-//!     ("DNX".to_string(), 0.027),
-//!     ("SOL".to_string(), 90.0),
-//! ]);
-//!
-//! execute_buy(&mut wallet, "DNX", prices["DNX"], 1, "bull signal", None);
-//! println!("Portfolio: ${:.2}", wallet.portfolio_value(&prices));
-//! ```
 
 pub mod engine;
 pub mod log;

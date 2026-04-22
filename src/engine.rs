@@ -2,9 +2,8 @@
 
 use crate::log::{append_ghost_log, GhostTradeLog};
 use crate::wallet::GhostWallet;
-use std::collections::HashMap;
 
-/// Initial biological energy currency (USDT).
+/// Initial biological energy currency (quote units).
 pub const CELLULAR_ATP: f32 = 500.0;
 
 /// Fraction of available energy committed per trade signal (8%).
@@ -123,25 +122,25 @@ mod tests {
     fn test_buy_reduces_usdt() {
         let mut wallet = GhostWallet::new();
         let before = wallet.balance_atp;
-        execute_buy(&mut wallet, "DNX", 0.03, 1, "test", None);
+        execute_buy(&mut wallet, "ASSET_A", 0.03, 1, "test", None);
         assert!(wallet.balance_atp < before);
     }
 
     #[test]
     fn test_sell_increases_usdt() {
         let mut wallet = GhostWallet::new();
-        wallet.balances.insert("DNX".to_string(), 1_000.0);
-        wallet.entry_prices.insert("DNX".to_string(), 0.02);
+        wallet.balances.insert("ASSET_A".to_string(), 1_000.0);
+        wallet.entry_prices.insert("ASSET_A".to_string(), 0.02);
         let before = wallet.balance_atp;
-        execute_sell(&mut wallet, "DNX", 0.05, 1, "test", None);
+        execute_sell(&mut wallet, "ASSET_A", 0.05, 1, "test", None);
         assert!(wallet.balance_atp > before, "sell at profit should increase ATP");
     }
 
     #[test]
     fn test_trade_count_increments() {
         let mut wallet = GhostWallet::new();
-        execute_buy(&mut wallet, "SOL", 90.0, 1, "test", None);
-        execute_sell(&mut wallet, "SOL", 95.0, 2, "test", None);
+        execute_buy(&mut wallet, "ASSET_A", 90.0, 1, "test", None);
+        execute_sell(&mut wallet, "ASSET_A", 95.0, 2, "test", None);
         assert_eq!(wallet.trade_count, 2);
     }
 
@@ -149,13 +148,9 @@ mod tests {
     fn test_portfolio_value() {
         let wallet = GhostWallet::new();
         let prices = HashMap::from([
-            ("DNX".to_string(), 0.0266),
-            ("SOL".to_string(), 86.0),
-            ("RENDER".to_string(), 1.52),
-            ("ASI".to_string(), 0.0616),
-            ("NEAR".to_string(), 1.31),
-            ("BTC".to_string(), 70_000.0),
-            ("PEPE".to_string(), 0.000_003_35),
+            ("ASSET_A".to_string(), 12.5),
+            ("ASSET_B".to_string(), 86.0),
+            ("ASSET_C".to_string(), 1_500.0),
         ]);
         let value = wallet.portfolio_value(&prices);
         assert_eq!(value, wallet.balance_atp);

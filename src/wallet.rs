@@ -57,7 +57,7 @@ impl GhostWallet {
         }
     }
 
-    /// Total portfolio value in USDT at current prices.
+    /// Total portfolio value in quote units at current prices.
     pub fn portfolio_value(&self, prices: &HashMap<String, f32>) -> f32 {
         let mut total = self.balance_atp;
         for (asset, qty) in &self.balances {

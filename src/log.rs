@@ -1,4 +1,3 @@
-//! JSONL trade log for ghost trading audit trail and SNN training data.
 
 use serde::Serialize;
 use std::io::Write as _;
