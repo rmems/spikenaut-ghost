@@ -14,7 +14,7 @@ pub struct GhostTradeLog {
     pub quantity: f32,
     pub trade_value_usdt: f32,
     pub realized_pnl_usdt: f32,
-    pub balance_usdt: f32,
+    pub balance_atp: f32,
     pub cumulative_pnl: f32,
     pub reason: String,
 }
