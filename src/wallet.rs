@@ -2,57 +2,28 @@
 
 use crate::engine::{CELLULAR_ATP, ENERGY_COMMITMENT};
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 /// Current market prices for all supported assets (USD).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MarketPrices {
-    pub dnx: f32,
-    pub sol: f32,
-    pub render: f32,
-    pub asi: f32,
-    pub near: f32,
-    pub btc: f32,
-    pub pepe: f32,
+    pub prices: HashMap<String, f32>,
 }
 
 impl MarketPrices {
     pub fn get(&self, asset: &str) -> f32 {
-        match asset {
-            "DNX" => self.dnx,
-            "SOL" => self.sol,
-            "RENDER" => self.render,
-            "ASI" => self.asi,
-            "NEAR" => self.near,
-            "BTC" => self.btc,
-            "PEPE" => self.pepe,
-            _ => 0.0,
-        }
+        *self.prices.get(asset).unwrap_or(&0.0)
     }
 }
 
 /// Virtual ghost-trading wallet with biological ATP energy model.
 pub struct GhostWallet {
-    // ── USDT base (cellular ATP) ──────────────────────────────────────────
-    pub balance_usdt: f32,
+    // ── ATP base (cellular ATP) ────────────────────────────────────────
+    pub balance_atp: f32,
 
     // ── Token positions ───────────────────────────────────────────────────
-    pub balance_dnx: f32,
-    pub balance_sol: f32,
-    pub balance_render: f32,
-    pub balance_asi: f32,
-    pub balance_near: f32,
-    pub balance_btc: f32,
-    pub balance_pepe: f32,
-
-    // ── Weighted-average cost basis ───────────────────────────────────────
-    pub entry_price_dnx: f32,
-    pub entry_price_sol: f32,
-    pub entry_price_render: f32,
-    pub entry_price_asi: f32,
-    pub entry_price_near: f32,
-    pub entry_price_btc: f32,
-    pub entry_price_pepe: f32,
+    pub balances: HashMap<String, f32>,
+    pub entry_prices: HashMap<String, f32>,
 
     // ── Performance tracking ──────────────────────────────────────────────
     pub cumulative_pnl: f32,
@@ -72,21 +43,9 @@ impl GhostWallet {
     /// Create a new ghost wallet with diversified initial positions.
     pub fn new() -> Self {
         Self {
-            balance_usdt: CELLULAR_ATP,
-            balance_dnx: 50.0,
-            balance_sol: 2.5,
-            balance_render: 50.0,
-            balance_asi: 500.0,
-            balance_near: 100.0,
-            balance_btc: 0.002,
-            balance_pepe: 1_000_000.0,
-            entry_price_dnx: 0.0266,
-            entry_price_sol: 86.0,
-            entry_price_render: 1.52,
-            entry_price_asi: 0.0616,
-            entry_price_near: 1.31,
-            entry_price_btc: 70_000.0,
-            entry_price_pepe: 0.000_003_35,
+            balance_atp: CELLULAR_ATP,
+            balances: HashMap::new(),
+            entry_prices: HashMap::new(),
             cumulative_pnl: 0.0,
             trade_count: 0,
             win_count: 0,
@@ -99,113 +58,49 @@ impl GhostWallet {
     }
 
     /// Total portfolio value in USDT at current prices.
-    pub fn portfolio_value(&self, prices: &MarketPrices) -> f32 {
-        self.balance_usdt
-            + self.balance_dnx * prices.dnx
-            + self.balance_sol * prices.sol
-            + self.balance_render * prices.render
-            + self.balance_asi * prices.asi
-            + self.balance_near * prices.near
-            + self.balance_btc * prices.btc
-            + self.balance_pepe * prices.pepe
+    pub fn portfolio_value(&self, prices: &HashMap<String, f32>) -> f32 {
+        let mut total = self.balance_atp;
+        for (asset, qty) in &self.balances {
+            total += qty * prices.get(asset).unwrap_or(&0.0);
+        }
+        total
     }
 
     /// Get token balance for a named asset.
     pub fn balance(&self, asset: &str) -> f32 {
-        match asset {
-            "DNX" => self.balance_dnx,
-            "SOL" => self.balance_sol,
-            "RENDER" => self.balance_render,
-            "ASI" => self.balance_asi,
-            "NEAR" => self.balance_near,
-            "BTC" => self.balance_btc,
-            "PEPE" => self.balance_pepe,
-            _ => 0.0,
-        }
+        *self.balances.get(asset).unwrap_or(&0.0)
     }
 
     /// Get cost basis (entry price) for a named asset.
     pub fn entry_price(&self, asset: &str) -> f32 {
-        match asset {
-            "DNX" => self.entry_price_dnx,
-            "SOL" => self.entry_price_sol,
-            "RENDER" => self.entry_price_render,
-            "ASI" => self.entry_price_asi,
-            "NEAR" => self.entry_price_near,
-            "BTC" => self.entry_price_btc,
-            "PEPE" => self.entry_price_pepe,
-            _ => 0.0,
-        }
+        *self.entry_prices.get(asset).unwrap_or(&0.0)
     }
 
     /// Update balance and cost basis after a buy.
     pub(crate) fn apply_buy(&mut self, asset: &str, qty: f32, net_spend: f32) {
-        match asset {
-            "DNX" => {
-                let prev_cost = self.entry_price_dnx * self.balance_dnx;
-                self.balance_dnx += qty;
-                if self.balance_dnx > 1e-9 {
-                    self.entry_price_dnx = (prev_cost + net_spend) / self.balance_dnx;
-                }
-            }
-            "SOL" => {
-                let prev_cost = self.entry_price_sol * self.balance_sol;
-                self.balance_sol += qty;
-                if self.balance_sol > 1e-9 {
-                    self.entry_price_sol = (prev_cost + net_spend) / self.balance_sol;
-                }
-            }
-            "RENDER" => {
-                let prev_cost = self.entry_price_render * self.balance_render;
-                self.balance_render += qty;
-                if self.balance_render > 1e-9 {
-                    self.entry_price_render = (prev_cost + net_spend) / self.balance_render;
-                }
-            }
-            "ASI" => {
-                let prev_cost = self.entry_price_asi * self.balance_asi;
-                self.balance_asi += qty;
-                if self.balance_asi > 1e-9 {
-                    self.entry_price_asi = (prev_cost + net_spend) / self.balance_asi;
-                }
-            }
-            "NEAR" => {
-                let prev_cost = self.entry_price_near * self.balance_near;
-                self.balance_near += qty;
-                if self.balance_near > 1e-9 {
-                    self.entry_price_near = (prev_cost + net_spend) / self.balance_near;
-                }
-            }
-            "BTC" => {
-                let prev_cost = self.entry_price_btc * self.balance_btc;
-                self.balance_btc += qty;
-                if self.balance_btc > 1e-9 {
-                    self.entry_price_btc = (prev_cost + net_spend) / self.balance_btc;
-                }
-            }
-            "PEPE" => {
-                let prev_cost = self.entry_price_pepe * self.balance_pepe;
-                self.balance_pepe += qty;
-                if self.balance_pepe > 1e-9 {
-                    self.entry_price_pepe = (prev_cost + net_spend) / self.balance_pepe;
-                }
-            }
-            _ => {}
+        let current_balance = *self.balances.get(asset).unwrap_or(&0.0);
+        let current_entry = *self.entry_prices.get(asset).unwrap_or(&0.0);
+
+        let prev_cost = current_entry * current_balance;
+        let new_balance = current_balance + qty;
+
+        self.balances.insert(asset.to_string(), new_balance);
+        if new_balance > 1e-9 {
+            self.entry_prices
+                .insert(asset.to_string(), (prev_cost + net_spend) / new_balance);
         }
     }
 
     /// Reduce balance after a sell.
     pub(crate) fn apply_sell(&mut self, asset: &str, qty: f32) {
-        match asset {
-            "DNX" => self.balance_dnx -= qty,
-            "SOL" => self.balance_sol -= qty,
-            "RENDER" => self.balance_render -= qty,
-            "ASI" => self.balance_asi -= qty,
-            "NEAR" => self.balance_near -= qty,
-            "BTC" => self.balance_btc -= qty,
-            "PEPE" => self.balance_pepe -= qty,
-            _ => {}
+        let current_balance = *self.balances.get(asset).unwrap_or(&0.0);
+        let new_balance = current_balance - qty;
+        if new_balance > 1e-9 {
+            self.balances.insert(asset.to_string(), new_balance);
+            return;
         }
+        self.balances.remove(asset);
+        self.entry_prices.remove(asset);
     }
 
     /// Record closed trade PnL and update Kelly fraction.
