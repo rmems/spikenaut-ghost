@@ -2,6 +2,7 @@
 
 use crate::log::{append_ghost_log, GhostTradeLog};
 use crate::wallet::GhostWallet;
+use std::collections::HashMap;
 
 /// Initial biological energy currency (USDT).
 pub const CELLULAR_ATP: f32 = 500.0;
@@ -14,7 +15,7 @@ pub const METABOLIC_COST: f32 = 0.001;
 
 /// Execute a ghost buy order.
 ///
-/// Spends `wallet.trade_fraction * wallet.balance_usdt` USDT after deducting
+/// Spends `wallet.trade_fraction * wallet.balance_atp` ATP after deducting
 /// the metabolic cost, then updates the weighted-average cost basis.
 pub fn execute_buy(
     wallet: &mut GhostWallet,
@@ -24,7 +25,7 @@ pub fn execute_buy(
     reason: &str,
     log_path: Option<&str>,
 ) {
-    let spend_usdt = wallet.balance_usdt * wallet.trade_fraction;
+    let spend_usdt = wallet.balance_atp * wallet.trade_fraction;
     if spend_usdt < 0.01 {
         return;
     }
@@ -34,7 +35,7 @@ pub fn execute_buy(
     let qty = net_spend / price.max(1e-9);
 
     wallet.apply_buy(asset, qty, net_spend);
-    wallet.balance_usdt -= spend_usdt;
+    wallet.balance_atp -= spend_usdt;
     wallet.trade_count += 1;
 
     let record = GhostTradeLog {
@@ -46,7 +47,7 @@ pub fn execute_buy(
         quantity: qty,
         trade_value_usdt: spend_usdt,
         realized_pnl_usdt: -fee,
-        balance_usdt: wallet.balance_usdt,
+        balance_atp: wallet.balance_atp,
         cumulative_pnl: wallet.cumulative_pnl,
         reason: reason.to_string(),
     };
@@ -84,7 +85,7 @@ pub fn execute_sell(
     let pnl = (price - entry_price) * qty - fee;
 
     wallet.apply_sell(asset, qty);
-    wallet.balance_usdt += net_proceeds;
+    wallet.balance_atp += net_proceeds;
     wallet.cumulative_pnl += pnl;
     wallet.trade_count += 1;
     wallet.record_pnl_and_update_kelly(pnl);
@@ -98,7 +99,7 @@ pub fn execute_sell(
         quantity: qty,
         trade_value_usdt: proceeds,
         realized_pnl_usdt: pnl,
-        balance_usdt: wallet.balance_usdt,
+        balance_atp: wallet.balance_atp,
         cumulative_pnl: wallet.cumulative_pnl,
         reason: reason.to_string(),
     };
@@ -116,25 +117,24 @@ pub fn execute_sell(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wallet::MarketPrices;
+    use std::collections::HashMap;
 
     #[test]
     fn test_buy_reduces_usdt() {
         let mut wallet = GhostWallet::new();
-        let before = wallet.balance_usdt;
+        let before = wallet.balance_atp;
         execute_buy(&mut wallet, "DNX", 0.03, 1, "test", None);
-        assert!(wallet.balance_usdt < before);
+        assert!(wallet.balance_atp < before);
     }
 
     #[test]
     fn test_sell_increases_usdt() {
         let mut wallet = GhostWallet::new();
-        let before = wallet.balance_usdt;
+        wallet.balances.insert("DNX".to_string(), 1_000.0);
+        wallet.entry_prices.insert("DNX".to_string(), 0.02);
+        let before = wallet.balance_atp;
         execute_sell(&mut wallet, "DNX", 0.05, 1, "test", None);
-        assert!(
-            wallet.balance_usdt > before,
-            "sell at profit should increase USDT"
-        );
+        assert!(wallet.balance_atp > before, "sell at profit should increase ATP");
     }
 
     #[test]
@@ -148,19 +148,16 @@ mod tests {
     #[test]
     fn test_portfolio_value() {
         let wallet = GhostWallet::new();
-        let prices = MarketPrices {
-            dnx: 0.0266,
-            sol: 86.0,
-            render: 1.52,
-            asi: 0.0616,
-            near: 1.31,
-            btc: 70_000.0,
-            pepe: 0.000_003_35,
-        };
+        let prices = HashMap::from([
+            ("DNX".to_string(), 0.0266),
+            ("SOL".to_string(), 86.0),
+            ("RENDER".to_string(), 1.52),
+            ("ASI".to_string(), 0.0616),
+            ("NEAR".to_string(), 1.31),
+            ("BTC".to_string(), 70_000.0),
+            ("PEPE".to_string(), 0.000_003_35),
+        ]);
         let value = wallet.portfolio_value(&prices);
-        assert!(
-            value > CELLULAR_ATP,
-            "initial portfolio should exceed USDT balance"
-        );
+        assert_eq!(value, wallet.balance_atp);
     }
 }
